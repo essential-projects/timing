@@ -11,6 +11,7 @@ function registerInContainer(container) {
   container.register('TimingService', TimingService)
     .dependencies('DatastoreService', 'IamService', 'EventAggregator')
     .injectLazy('DatastoreService')
+    .configure('timing:timing_service')
     .singleton();
 
   container.register('TimerEntity', TimerEntity)
