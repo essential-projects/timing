@@ -1,0 +1,32 @@
+import { IEventAggregator } from '@process-engine-js/event_aggregator_contracts';
+import { ExecutionContext, IFactory, IIamService } from '@process-engine-js/core_contracts';
+import { ITimingService } from '@process-engine-js/timing_contracts';
+import { IDatastoreService } from '@process-engine-js/data_model_contracts';
+export declare class TimingService implements ITimingService {
+    private _jobs;
+    private _datastoreServiceFactory;
+    private _datastoreService;
+    private _iamService;
+    private _eventAggregator;
+    config: any;
+    constructor(datastoreServiceFactory: IFactory<IDatastoreService>, iamService: IIamService, eventAggregator: IEventAggregator);
+    private readonly datastoreService;
+    private readonly iamService;
+    private readonly eventAggregator;
+    initialize(context: ExecutionContext): Promise<void>;
+    cancel(timerId: string, context: ExecutionContext): Promise<void>;
+    once(date: Date, eventName: string, context: ExecutionContext): Promise<string>;
+    cron(cronString: string, eventName: string, context: ExecutionContext): Promise<string>;
+    private _timerElapsed(timerId, eventName);
+    private _getContext();
+    private _getJob(timerId);
+    private _cacheJob(timerId, job);
+    private _removeJob(timerId);
+    private _getTimerEntityType();
+    private _getTimerEntityById(timerId, context);
+    private _removeTimerEntity(timerId, context);
+    private _createTimer(timerType, timerValue, eventName, context);
+    private _createJob(timerId, jobDefinition, eventName);
+    private _createTimerEntity(timerData, context);
+    private _restorePersistedJobs(context);
+}

@@ -1,0 +1,24 @@
+{
+  "name": "@process-engine-js/timing",
+  "publishConfig": {
+    "registry": "https://www.npmjs.com"
+  },
+  "version": "1.0.0",
+  "description": "components for timing",
+  "license": "MIT",
+  "main": "dist/commonjs/index.js",
+  "typings": "dist/index.d.ts",
+  "contributors": [
+    "Sebastian Meier <sebastian.meier@5minds.de>",
+    "Patrick Pötschke <patrick.poetschke@quantusflow.com>",
+    "Simon Reymann <simon.reymann@quantusflow.com>"
+  ],
+  "dependencies": {
+    "debug": "^2.6.1",
+    "node-schedule": "^1.2.1"
+  },
+  "devDependencies": {
+    "gulp": "^3.9.1",
+    "tsconfig": "^6.0.0"
+  }
+}

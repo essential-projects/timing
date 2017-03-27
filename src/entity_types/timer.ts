@@ -1,0 +1,56 @@
+import {Entity, EntityDependencyHelper} from '@process-engine-js/data_model_contracts';
+import { ClaimActionType, ExecutionContext, SchemaAttributeType, IEntity, IInheritedSchema, IUserEntity} from '@process-engine-js/core_contracts';
+import {ITimerEntity, TimerType} from '@process-engine-js/timing_contracts';
+import {schemaAttribute} from '@process-engine-js/metadata';
+
+export class TimerEntity extends Entity implements ITimerEntity {
+
+  constructor(entityDependencyHelper: EntityDependencyHelper, 
+              context: ExecutionContext,
+              schema: IInheritedSchema) {
+    super(entityDependencyHelper, context, schema);
+  }
+  
+  public async initialize(derivedClassInstance: IEntity): Promise<void> {
+    const actualInstance = derivedClassInstance || this;
+    await super.initialize(actualInstance);
+  }
+
+  @schemaAttribute({ type: SchemaAttributeType.number })
+  public get timerType(): TimerType {
+    return this.getProperty(this, 'timerType');
+  }
+
+  public set timerType(value: TimerType) {
+    this.setProperty(this, 'timerType', value);
+  }
+
+  @schemaAttribute({ type: SchemaAttributeType.string })
+  public get timerValue(): string {
+    return this.getProperty(this, 'timerValue');
+  }
+
+  public set timerValue(value: string) {
+    this.setProperty(this, 'timerValue', value);
+  }
+
+  @schemaAttribute({ type: SchemaAttributeType.string })
+  public get eventName(): string {
+    return this.getProperty(this, 'eventName');
+  }
+
+  public set eventName(value: string) {
+    this.setProperty(this, 'eventName', value);
+  }
+
+  @schemaAttribute({ type: SchemaAttributeType.Date })
+  public get lastElapsed(): Date {
+    return this.getProperty(this, 'eventName');
+  }
+
+  public set lastElapsed(value: Date) {
+    this.setProperty(this, 'eventName', value);
+  }
+
+
+}
