@@ -1,6 +1,6 @@
 import {Entity, EntityDependencyHelper} from '@process-engine-js/data_model_contracts';
 import { ClaimActionType, ExecutionContext, SchemaAttributeType, IEntity, IInheritedSchema, IUserEntity} from '@process-engine-js/core_contracts';
-import {ITimerEntity, TimerType} from '@process-engine-js/timing_contracts';
+import {ITimerEntity, TimerType, TimerValue} from '@process-engine-js/timing_contracts';
 import {schemaAttribute} from '@process-engine-js/metadata';
 
 export class TimerEntity extends Entity implements ITimerEntity {
@@ -25,12 +25,12 @@ export class TimerEntity extends Entity implements ITimerEntity {
     this.setProperty(this, 'timerType', value);
   }
 
-  @schemaAttribute({ type: SchemaAttributeType.string })
-  public get timerValue(): string {
+  @schemaAttribute({ type: SchemaAttributeType.object })
+  public get timerValue(): TimerValue {
     return this.getProperty(this, 'timerValue');
   }
 
-  public set timerValue(value: string) {
+  public set timerValue(value: TimerValue) {
     this.setProperty(this, 'timerValue', value);
   }
 

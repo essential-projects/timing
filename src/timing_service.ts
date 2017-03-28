@@ -1,6 +1,6 @@
 import {IEventAggregator} from '@process-engine-js/event_aggregator_contracts';
 import {ExecutionContext, IFactory, IPrivateQueryOptions, IIamService} from '@process-engine-js/core_contracts';
-import {ITimingService, ITimingRule, ITimerEntity, TimerType} from '@process-engine-js/timing_contracts';
+import {ITimingService, ITimingRule, ITimerEntity, TimerType, TimerValue} from '@process-engine-js/timing_contracts';
 import {IDatastoreService, IEntityType} from '@process-engine-js/data_model_contracts';
 import * as schedule from 'node-schedule';
 
@@ -67,9 +67,14 @@ export class TimingService implements ITimingService {
     return this._createTimer(TimerType.once, date.toString(), eventName, context);
   }
 
-  // public async periodic(rule: ITimingRule, eventName: string, context: ExecutionContext): Promise<string> {
+  public async periodic(rule: ITimingRule, eventName: string, context: ExecutionContext): Promise<string> {
 
-  // }
+    if (!rule) {
+      throw new Error('invalid date');
+    }
+
+    return this._createTimer(TimerType.periodic, rule, eventName, context);
+  }
 
   public async cron(cronString: string, eventName: string, context: ExecutionContext): Promise<string> {
 
@@ -142,7 +147,7 @@ export class TimingService implements ITimingService {
     }
   }
 
-  private async _createTimer(timerType: TimerType, timerValue: string, eventName: string, context: ExecutionContext): Promise<string> {
+  private async _createTimer(timerType: TimerType, timerValue: TimerValue, eventName: string, context: ExecutionContext): Promise<string> {
 
     const timerEntityType = await this._getTimerEntityType();
 
@@ -165,7 +170,7 @@ export class TimingService implements ITimingService {
     return timerEntity.id;
   }
 
-  private _createJob(timerId: string, jobDefinition: string|Date|schedule.RecurrenceRule, eventName: string): schedule.Job {
+  private _createJob(timerId: string, jobDefinition: TimerValue, eventName: string): schedule.Job {
 
     const job = schedule.scheduleJob(jobDefinition, async () => {
       return this._timerElapsed(timerId, eventName);

@@ -41,6 +41,12 @@ class TimingService {
         }
         return this._createTimer(timing_contracts_1.TimerType.once, date.toString(), eventName, context);
     }
+    async periodic(rule, eventName, context) {
+        if (!rule) {
+            throw new Error('invalid date');
+        }
+        return this._createTimer(timing_contracts_1.TimerType.periodic, rule, eventName, context);
+    }
     async cron(cronString, eventName, context) {
         if (!cronString) {
             throw new Error('invalid cron input');
@@ -91,7 +97,7 @@ class TimingService {
         const timerEntityType = await this._getTimerEntityType();
         const createOptions = {};
         const timerData = {
-            timerType: timing_contracts_1.TimerType.once,
+            timerType: timerType,
             timerValue: timerValue,
             eventName: eventName
         };
