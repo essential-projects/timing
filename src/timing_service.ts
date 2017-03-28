@@ -149,7 +149,7 @@ export class TimingService implements ITimingService {
     const createOptions = {};
 
     const timerData = {
-      timerType: TimerType.once,
+      timerType: timerType,
       timerValue: timerValue,
       eventName: eventName
     };
