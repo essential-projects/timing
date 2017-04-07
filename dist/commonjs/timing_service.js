@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 const timing_contracts_1 = require("@process-engine-js/timing_contracts");
 const schedule = require("node-schedule");
 class TimingService {
