@@ -1,6 +1,6 @@
 import {Entity, EntityDependencyHelper} from '@process-engine-js/data_model_contracts';
 import { ClaimActionType, ExecutionContext, SchemaAttributeType, IEntity, IInheritedSchema, IUserEntity} from '@process-engine-js/core_contracts';
-import {ITimerEntity, TimerType, TimerValue} from '@process-engine-js/timing_contracts';
+import {ITimerEntity, TimerType, ITimingRule} from '@process-engine-js/timing_contracts';
 import {schemaAttribute} from '@process-engine-js/metadata';
 
 export class TimerEntity extends Entity implements ITimerEntity {
@@ -25,13 +25,22 @@ export class TimerEntity extends Entity implements ITimerEntity {
     this.setProperty(this, 'timerType', value);
   }
 
-  @schemaAttribute({ type: SchemaAttributeType.object })
-  public get timerValue(): TimerValue {
-    return this.getProperty(this, 'timerValue');
+  @schemaAttribute({ type: SchemaAttributeType.string })
+  public get timerIsoString(): string {
+    return this.getProperty(this, 'timerIsoString');
   }
 
-  public set timerValue(value: TimerValue) {
-    this.setProperty(this, 'timerValue', value);
+  public set timerIsoString(value: string) {
+    this.setProperty(this, 'timerIsoString', value);
+  }
+
+  @schemaAttribute({ type: SchemaAttributeType.object })
+  public get timerRule(): ITimingRule {
+    return this.getProperty(this, 'timerRule');
+  }
+
+  public set timerRule(value: ITimingRule) {
+    this.setProperty(this, 'timerRule', value);
   }
 
   @schemaAttribute({ type: SchemaAttributeType.string })

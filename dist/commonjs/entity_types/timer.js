@@ -22,11 +22,17 @@ class TimerEntity extends data_model_contracts_1.Entity {
     set timerType(value) {
         this.setProperty(this, 'timerType', value);
     }
-    get timerValue() {
-        return this.getProperty(this, 'timerValue');
+    get timerIsoString() {
+        return this.getProperty(this, 'timerIsoString');
     }
-    set timerValue(value) {
-        this.setProperty(this, 'timerValue', value);
+    set timerIsoString(value) {
+        this.setProperty(this, 'timerIsoString', value);
+    }
+    get timerRule() {
+        return this.getProperty(this, 'timerRule');
+    }
+    set timerRule(value) {
+        this.setProperty(this, 'timerRule', value);
     }
     get eventName() {
         return this.getProperty(this, 'eventName');
@@ -45,8 +51,11 @@ __decorate([
     metadata_1.schemaAttribute({ type: core_contracts_1.SchemaAttributeType.number })
 ], TimerEntity.prototype, "timerType", null);
 __decorate([
+    metadata_1.schemaAttribute({ type: core_contracts_1.SchemaAttributeType.string })
+], TimerEntity.prototype, "timerIsoString", null);
+__decorate([
     metadata_1.schemaAttribute({ type: core_contracts_1.SchemaAttributeType.object })
-], TimerEntity.prototype, "timerValue", null);
+], TimerEntity.prototype, "timerRule", null);
 __decorate([
     metadata_1.schemaAttribute({ type: core_contracts_1.SchemaAttributeType.string })
 ], TimerEntity.prototype, "eventName", null);

@@ -1,8 +1,10 @@
 import {IEventAggregator} from '@process-engine-js/event_aggregator_contracts';
 import {ExecutionContext, IFactory, IPrivateQueryOptions, IIamService} from '@process-engine-js/core_contracts';
-import {ITimingService, ITimingRule, ITimerEntity, TimerType, TimerValue} from '@process-engine-js/timing_contracts';
+import {ITimingService, ITimingRule, ITimerEntity, TimerType} from '@process-engine-js/timing_contracts';
 import {IDatastoreService, IEntityType} from '@process-engine-js/data_model_contracts';
+
 import * as schedule from 'node-schedule';
+import * as moment from 'moment';
 
 interface IJobsCache {
   [timerId: string]: schedule.Job;
@@ -17,7 +19,7 @@ export class TimingService implements ITimingService {
   private _iamService: IIamService = undefined;
   private _eventAggregator: IEventAggregator = undefined;
 
-  public config: any;
+  public config: any = undefined;
 
   constructor(datastoreServiceFactory: IFactory<IDatastoreService>, iamService: IIamService, eventAggregator: IEventAggregator) {
     this._datastoreServiceFactory = datastoreServiceFactory;
@@ -58,13 +60,13 @@ export class TimingService implements ITimingService {
     return this._removeTimerEntity(timerId, context);
   }
 
-  public async once(date: Date, eventName: string, context: ExecutionContext): Promise<string> {
+  public async once(date: moment.Moment, eventName: string, context: ExecutionContext): Promise<string> {
 
     if (!date) {
       throw new Error('invalid date');
     }
 
-    return this._createTimer(TimerType.once, date.toString(), eventName, context);
+    return this._createTimer(TimerType.once, date, undefined, eventName, context);
   }
 
   public async periodic(rule: ITimingRule, eventName: string, context: ExecutionContext): Promise<string> {
@@ -73,17 +75,17 @@ export class TimingService implements ITimingService {
       throw new Error('invalid date');
     }
 
-    return this._createTimer(TimerType.periodic, rule, eventName, context);
+    return this._createTimer(TimerType.periodic, undefined, rule, eventName, context);
   }
 
-  public async cron(cronString: string, eventName: string, context: ExecutionContext): Promise<string> {
+  // public async cron(cronString: string, eventName: string, context: ExecutionContext): Promise<string> {
 
-    if (!cronString) {
-      throw new Error('invalid cron input');
-    }
+  //   if (!cronString) {
+  //     throw new Error('invalid cron input');
+  //   }
     
-    return this._createTimer(TimerType.cron, cronString, eventName, context);
-  }
+  //   return this._createTimer(TimerType.cron, cronString, eventName, context);
+  // }
 
   private async _timerElapsed(timerId: string, eventName: string): Promise<void> {
 
@@ -95,7 +97,7 @@ export class TimingService implements ITimingService {
 
     await timerEntity.save(context);
 
-    this.eventAggregator.emit(eventName);
+    this.eventAggregator.publish(eventName);
   }
 
   private _getContext(): Promise<ExecutionContext> {
@@ -147,7 +149,7 @@ export class TimingService implements ITimingService {
     }
   }
 
-  private async _createTimer(timerType: TimerType, timerValue: TimerValue, eventName: string, context: ExecutionContext): Promise<string> {
+  private async _createTimer(timerType: TimerType, timerDate: moment.Moment, timerRule: ITimingRule, eventName: string, context: ExecutionContext): Promise<string> {
 
     const timerEntityType = await this._getTimerEntityType();
 
@@ -155,11 +157,14 @@ export class TimingService implements ITimingService {
 
     const timerData = {
       timerType: timerType,
-      timerValue: timerValue,
+      timerIsoString: timerDate ? timerDate.toISOString() : null,
+      timerRule: timerRule,
       eventName: eventName
     };
 
     const timerEntity = await timerEntityType.createEntity<ITimerEntity>(context, timerData, createOptions);
+
+    const timerValue = timerType === TimerType.periodic ? timerRule : timerDate.toDate();
     
     const job = this._createJob(timerEntity.id, timerValue, eventName);
 
@@ -170,9 +175,9 @@ export class TimingService implements ITimingService {
     return timerEntity.id;
   }
 
-  private _createJob(timerId: string, jobDefinition: TimerValue, eventName: string): schedule.Job {
+  private _createJob(timerId: string, timerValue: Date | ITimingRule, eventName: string): schedule.Job {
 
-    const job = schedule.scheduleJob(jobDefinition, async () => {
+    const job = schedule.scheduleJob(timerValue, async () => {
       return this._timerElapsed(timerId, eventName);
     });
     
@@ -234,7 +239,9 @@ export class TimingService implements ITimingService {
 
     timerEntities.data.forEach((timerEntity: ITimerEntity) => {
 
-      this._createJob(timerEntity.id, timerEntity.timerValue, timerEntity.eventName);
+      const timerValue = timerEntity.timerType === TimerType.periodic ? timerEntity.timerRule : timerEntity.timerIsoString;
+
+      this._createJob(timerEntity.id, timerValue, timerEntity.eventName);
     });
   }
 }

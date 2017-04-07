@@ -8,6 +8,7 @@ class TimingService {
         this._datastoreService = undefined;
         this._iamService = undefined;
         this._eventAggregator = undefined;
+        this.config = undefined;
         this._datastoreServiceFactory = datastoreServiceFactory;
         this._iamService = iamService;
         this._eventAggregator = eventAggregator;
@@ -39,26 +40,20 @@ class TimingService {
         if (!date) {
             throw new Error('invalid date');
         }
-        return this._createTimer(timing_contracts_1.TimerType.once, date.toString(), eventName, context);
+        return this._createTimer(timing_contracts_1.TimerType.once, date, undefined, eventName, context);
     }
     async periodic(rule, eventName, context) {
         if (!rule) {
             throw new Error('invalid date');
         }
-        return this._createTimer(timing_contracts_1.TimerType.periodic, rule, eventName, context);
-    }
-    async cron(cronString, eventName, context) {
-        if (!cronString) {
-            throw new Error('invalid cron input');
-        }
-        return this._createTimer(timing_contracts_1.TimerType.cron, cronString, eventName, context);
+        return this._createTimer(timing_contracts_1.TimerType.periodic, undefined, rule, eventName, context);
     }
     async _timerElapsed(timerId, eventName) {
         const context = await this._getContext();
         const timerEntity = await this._getTimerEntityById(timerId, context);
         timerEntity.lastElapsed = new Date();
         await timerEntity.save(context);
-        this.eventAggregator.emit(eventName);
+        this.eventAggregator.publish(eventName);
     }
     _getContext() {
         return this.iamService.createInternalContext(this.config.systemUserId);
@@ -93,22 +88,24 @@ class TimingService {
             await timerEntity.remove(context, removeOptions);
         }
     }
-    async _createTimer(timerType, timerValue, eventName, context) {
+    async _createTimer(timerType, timerDate, timerRule, eventName, context) {
         const timerEntityType = await this._getTimerEntityType();
         const createOptions = {};
         const timerData = {
             timerType: timerType,
-            timerValue: timerValue,
+            timerIsoString: timerDate ? timerDate.toISOString() : null,
+            timerRule: timerRule,
             eventName: eventName
         };
         const timerEntity = await timerEntityType.createEntity(context, timerData, createOptions);
+        const timerValue = timerType === timing_contracts_1.TimerType.periodic ? timerRule : timerDate.toDate();
         const job = this._createJob(timerEntity.id, timerValue, eventName);
         const saveOptions = {};
         await timerEntity.save(context, saveOptions);
         return timerEntity.id;
     }
-    _createJob(timerId, jobDefinition, eventName) {
-        const job = schedule.scheduleJob(jobDefinition, async () => {
+    _createJob(timerId, timerValue, eventName) {
+        const job = schedule.scheduleJob(timerValue, async () => {
             return this._timerElapsed(timerId, eventName);
         });
         if (!job) {
@@ -152,7 +149,8 @@ class TimingService {
         };
         const timerEntities = await timerEntityType.all(context, queryOptions);
         timerEntities.data.forEach((timerEntity) => {
-            this._createJob(timerEntity.id, timerEntity.timerValue, timerEntity.eventName);
+            const timerValue = timerEntity.timerType === timing_contracts_1.TimerType.periodic ? timerEntity.timerRule : timerEntity.timerIsoString;
+            this._createJob(timerEntity.id, timerValue, timerEntity.eventName);
         });
     }
 }
