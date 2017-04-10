@@ -18,6 +18,7 @@
     "@process-engine-js/event_aggregator_contracts": "^1.0.2",
     "@process-engine-js/timing_contracts": "^1.0.3",
     "debug": "^2.6.1",
+    "moment": "^2.18.1",
     "node-schedule": "^1.2.1"
   },
   "devDependencies": {
