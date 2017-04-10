@@ -14,6 +14,9 @@
     "Simon Reymann <simon.reymann@quantusflow.com>"
   ],
   "dependencies": {
+    "@process-engine-js/data_model_contracts": "^1.0.59",
+    "@process-engine-js/event_aggregator_contracts": "^1.0.2",
+    "@process-engine-js/timing_contracts": "^1.0.3",
     "debug": "^2.6.1",
     "node-schedule": "^1.2.1"
   },
