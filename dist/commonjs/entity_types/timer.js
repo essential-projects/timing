@@ -42,10 +42,10 @@ class TimerEntity extends data_model_contracts_1.Entity {
         this.setProperty(this, 'eventName', value);
     }
     get lastElapsed() {
-        return this.getProperty(this, 'eventName');
+        return this.getProperty(this, 'lastElapsed');
     }
     set lastElapsed(value) {
-        this.setProperty(this, 'eventName', value);
+        this.setProperty(this, 'lastElapsed', value);
     }
 }
 __decorate([

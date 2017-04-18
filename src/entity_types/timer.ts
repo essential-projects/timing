@@ -54,12 +54,11 @@ export class TimerEntity extends Entity implements ITimerEntity {
 
   @schemaAttribute({ type: SchemaAttributeType.Date })
   public get lastElapsed(): Date {
-    return this.getProperty(this, 'eventName');
+    return this.getProperty(this, 'lastElapsed');
   }
 
   public set lastElapsed(value: Date) {
-    this.setProperty(this, 'eventName', value);
+    this.setProperty(this, 'lastElapsed', value);
   }
-
 
 }
