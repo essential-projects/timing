@@ -100,7 +100,7 @@ class TimingService {
         };
         const timerEntity = await timerEntityType.createEntity(context, timerData, createOptions);
         const timerValue = timerType === timing_contracts_1.TimerType.periodic ? timerRule : timerDate.toDate();
-        const job = this._createJob(timerEntity.id, timerValue, eventName);
+        this._createJob(timerEntity.id, timerValue, eventName);
         const saveOptions = {};
         await timerEntity.save(context, saveOptions);
         return timerEntity.id;

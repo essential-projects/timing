@@ -56,7 +56,7 @@ export class TimingService implements ITimingService {
 
       this._removeJob(timerId);
     }
-    
+
     return this._removeTimerEntity(timerId, context);
   }
 
@@ -83,7 +83,7 @@ export class TimingService implements ITimingService {
   //   if (!cronString) {
   //     throw new Error('invalid cron input');
   //   }
-    
+
   //   return this._createTimer(TimerType.cron, cronString, eventName, context);
   // }
 
@@ -138,7 +138,7 @@ export class TimingService implements ITimingService {
   }
 
   private async _removeTimerEntity(timerId: string, context: ExecutionContext): Promise<void> {
-    
+
     const timerEntity = await this._getTimerEntityById(timerId, context);
 
     if (timerEntity) {
@@ -165,8 +165,8 @@ export class TimingService implements ITimingService {
     const timerEntity = await timerEntityType.createEntity<ITimerEntity>(context, timerData, createOptions);
 
     const timerValue = timerType === TimerType.periodic ? timerRule : timerDate.toDate();
-    
-    const job = this._createJob(timerEntity.id, timerValue, eventName);
+
+    this._createJob(timerEntity.id, timerValue, eventName);
 
     const saveOptions = {};
 
@@ -180,7 +180,7 @@ export class TimingService implements ITimingService {
     const job = schedule.scheduleJob(timerValue, async () => {
       return this._timerElapsed(timerId, eventName);
     });
-    
+
     if (!job) {
       throw new Error('an error occured during job scheduling');
     }
@@ -190,7 +190,7 @@ export class TimingService implements ITimingService {
     return job;
   }
 
-  private async _createTimerEntity(timerData: any, context: ExecutionContext): Promise<ITimerEntity> {
+  private async _createTimerEntity(timerData: any, context: ExecutionContext): Promise<ITimerEntity> {  // tslint:disable-line no-unused-variable
 
     const timerEntityType = await this._getTimerEntityType();
 
