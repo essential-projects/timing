@@ -10,7 +10,7 @@ function registerInContainer(container) {
 
   container.register('TimingService', TimingService)
     .dependencies('DatastoreService', 'IamService', 'EventAggregator')
-    .injectLazy('DatastoreService')
+    .injectPromiseLazy('DatastoreService')
     .configure('timing:timing_service')
     .singleton();
 

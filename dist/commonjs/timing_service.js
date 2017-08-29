@@ -14,9 +14,9 @@ class TimingService {
         this._iamService = iamService;
         this._eventAggregator = eventAggregator;
     }
-    get datastoreService() {
+    async getDatastoreService() {
         if (!this._datastoreService) {
-            this._datastoreService = this._datastoreServiceFactory();
+            this._datastoreService = await this._datastoreServiceFactory();
         }
         return this._datastoreService;
     }
@@ -26,7 +26,9 @@ class TimingService {
     get eventAggregator() {
         return this._eventAggregator;
     }
-    async initialize(context) {
+    async initialize() {
+        console.log('TimingService initialize 1');
+        const context = await this._getContext();
         return this._restorePersistedJobs(context);
     }
     async cancel(timerId, context) {
@@ -70,8 +72,13 @@ class TimingService {
             delete this._jobs[timerId];
         }
     }
-    _getTimerEntityType() {
-        return this.datastoreService.getEntityType('Timer');
+    async _getTimerEntityType() {
+        console.log('TimingService _getTimerEntityType 1');
+        const datastoreService = await this.getDatastoreService();
+        console.log('TimingService _getTimerEntityType 2');
+        const entityType = await datastoreService.getEntityType('Timer');
+        console.log('TimingService _getTimerEntityType 3');
+        return entityType;
     }
     async _getTimerEntityById(timerId, context) {
         const timerEntityType = await this._getTimerEntityType();
@@ -124,7 +131,9 @@ class TimingService {
         return timerEntity;
     }
     async _restorePersistedJobs(context) {
+        console.log('TimingService _restorePersitedJobs 1');
         const timerEntityType = await this._getTimerEntityType();
+        console.log('TimingService _restorePersitedJobs 2');
         const timerOnceQuery = {
             operator: 'and',
             queries: [{
@@ -148,11 +157,16 @@ class TimingService {
                 queries: [timerOnceQuery, otherTimersQuery]
             }
         };
+        console.log('TimingService _restorePersitedJobs 3');
         const timerEntities = await timerEntityType.all(context, queryOptions);
+        console.log('TimingService _restorePersitedJobs 4');
         timerEntities.data.forEach((timerEntity) => {
             const timerValue = timerEntity.timerType === timing_contracts_1.TimerType.periodic ? timerEntity.timerRule : timerEntity.timerIsoString;
+            console.log('TimingService _restorePersitedJobs 4 - ' + timerEntity.id + ' - 1');
             this._createJob(timerEntity.id, timerValue, timerEntity.eventName);
+            console.log('TimingService _restorePersitedJobs 4 - ' + timerEntity.id + ' - 2');
         });
+        console.log('TimingService _restorePersitedJobs 5');
     }
 }
 exports.TimingService = TimingService;

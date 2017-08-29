@@ -1,7 +1,8 @@
 import {IEventAggregator} from '@process-engine-js/event_aggregator_contracts';
-import {ExecutionContext, IFactory, IPrivateQueryOptions, IIamService} from '@process-engine-js/core_contracts';
+import {ExecutionContext, IPrivateQueryOptions, IIamService} from '@process-engine-js/core_contracts';
 import {ITimingService, ITimingRule, ITimerEntity, TimerType} from '@process-engine-js/timing_contracts';
 import {IDatastoreService, IEntityType} from '@process-engine-js/data_model_contracts';
+import {IFactoryAsync} from 'addict-ioc'
 
 import * as schedule from 'node-schedule';
 import * as moment from 'moment';
@@ -14,22 +15,22 @@ export class TimingService implements ITimingService {
 
   private _jobs: IJobsCache = {};
 
-  private _datastoreServiceFactory: IFactory<IDatastoreService> = undefined;
+  private _datastoreServiceFactory: IFactoryAsync<IDatastoreService> = undefined;
   private _datastoreService: IDatastoreService = undefined;
   private _iamService: IIamService = undefined;
   private _eventAggregator: IEventAggregator = undefined;
 
   public config: any = undefined;
 
-  constructor(datastoreServiceFactory: IFactory<IDatastoreService>, iamService: IIamService, eventAggregator: IEventAggregator) {
+  constructor(datastoreServiceFactory: IFactoryAsync<IDatastoreService>, iamService: IIamService, eventAggregator: IEventAggregator) {
     this._datastoreServiceFactory = datastoreServiceFactory;
     this._iamService = iamService;
     this._eventAggregator = eventAggregator;
   }
 
-  private get datastoreService(): IDatastoreService {
+  private async getDatastoreService(): Promise<IDatastoreService> {
     if (!this._datastoreService) {
-      this._datastoreService = this._datastoreServiceFactory();
+      this._datastoreService = await this._datastoreServiceFactory();
     }
     return this._datastoreService;
   }
@@ -42,7 +43,9 @@ export class TimingService implements ITimingService {
     return this._eventAggregator;
   }
 
-  public async initialize(context: ExecutionContext): Promise<void> {
+  public async initialize(): Promise<void> {
+    console.log('TimingService initialize 1')
+    const context: ExecutionContext = await this._getContext();
     return this._restorePersistedJobs(context);
   }
 
@@ -118,8 +121,13 @@ export class TimingService implements ITimingService {
     }
   }
 
-  private _getTimerEntityType(): Promise<IEntityType<ITimerEntity>> {
-    return this.datastoreService.getEntityType('Timer');
+  private async _getTimerEntityType(): Promise<IEntityType<ITimerEntity>> {
+    console.log('TimingService _getTimerEntityType 1')
+    const datastoreService = await this.getDatastoreService();
+    console.log('TimingService _getTimerEntityType 2')
+    const entityType = await datastoreService.getEntityType<ITimerEntity>('Timer');
+    console.log('TimingService _getTimerEntityType 3')
+    return entityType;
   }
 
   private async _getTimerEntityById(timerId: string, context: ExecutionContext): Promise<ITimerEntity> {
@@ -207,8 +215,9 @@ export class TimingService implements ITimingService {
 
   private async _restorePersistedJobs(context: ExecutionContext): Promise<void> {
 
+    console.log('TimingService _restorePersitedJobs 1')
     const timerEntityType = await this._getTimerEntityType();
-
+    console.log('TimingService _restorePersitedJobs 2')
     const timerOnceQuery = {
       operator: 'and',
       queries: [{
@@ -235,13 +244,18 @@ export class TimingService implements ITimingService {
       }
     };
 
+    console.log('TimingService _restorePersitedJobs 3')
     const timerEntities = await timerEntityType.all(context, queryOptions);
 
+    console.log('TimingService _restorePersitedJobs 4')
     timerEntities.data.forEach((timerEntity: ITimerEntity) => {
 
       const timerValue = timerEntity.timerType === TimerType.periodic ? timerEntity.timerRule : timerEntity.timerIsoString;
 
+      console.log('TimingService _restorePersitedJobs 4 - ' + timerEntity.id + ' - 1')
       this._createJob(timerEntity.id, timerValue, timerEntity.eventName);
+      console.log('TimingService _restorePersitedJobs 4 - ' + timerEntity.id + ' - 2')
     });
+    console.log('TimingService _restorePersitedJobs 5')
   }
 }
