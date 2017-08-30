@@ -27,7 +27,6 @@ class TimingService {
         return this._eventAggregator;
     }
     async initialize() {
-        console.log('TimingService initialize 1');
         const context = await this._getContext();
         return this._restorePersistedJobs(context);
     }
@@ -73,11 +72,8 @@ class TimingService {
         }
     }
     async _getTimerEntityType() {
-        console.log('TimingService _getTimerEntityType 1');
         const datastoreService = await this.getDatastoreService();
-        console.log('TimingService _getTimerEntityType 2');
         const entityType = await datastoreService.getEntityType('Timer');
-        console.log('TimingService _getTimerEntityType 3');
         return entityType;
     }
     async _getTimerEntityById(timerId, context) {
@@ -131,9 +127,7 @@ class TimingService {
         return timerEntity;
     }
     async _restorePersistedJobs(context) {
-        console.log('TimingService _restorePersitedJobs 1');
         const timerEntityType = await this._getTimerEntityType();
-        console.log('TimingService _restorePersitedJobs 2');
         const timerOnceQuery = {
             operator: 'and',
             queries: [{
@@ -157,16 +151,11 @@ class TimingService {
                 queries: [timerOnceQuery, otherTimersQuery]
             }
         };
-        console.log('TimingService _restorePersitedJobs 3');
         const timerEntities = await timerEntityType.all(context, queryOptions);
-        console.log('TimingService _restorePersitedJobs 4');
         timerEntities.data.forEach((timerEntity) => {
             const timerValue = timerEntity.timerType === timing_contracts_1.TimerType.periodic ? timerEntity.timerRule : timerEntity.timerIsoString;
-            console.log('TimingService _restorePersitedJobs 4 - ' + timerEntity.id + ' - 1');
             this._createJob(timerEntity.id, timerValue, timerEntity.eventName);
-            console.log('TimingService _restorePersitedJobs 4 - ' + timerEntity.id + ' - 2');
         });
-        console.log('TimingService _restorePersitedJobs 5');
     }
 }
 exports.TimingService = TimingService;
