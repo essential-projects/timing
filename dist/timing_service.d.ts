@@ -1,7 +1,8 @@
 import { IEventAggregator } from '@process-engine-js/event_aggregator_contracts';
-import { ExecutionContext, IFactory, IIamService } from '@process-engine-js/core_contracts';
+import { ExecutionContext, IIamService } from '@process-engine-js/core_contracts';
 import { ITimingService, ITimingRule } from '@process-engine-js/timing_contracts';
 import { IDatastoreService } from '@process-engine-js/data_model_contracts';
+import { IFactoryAsync } from 'addict-ioc';
 import * as moment from 'moment';
 export declare class TimingService implements ITimingService {
     private _jobs;
@@ -10,11 +11,11 @@ export declare class TimingService implements ITimingService {
     private _iamService;
     private _eventAggregator;
     config: any;
-    constructor(datastoreServiceFactory: IFactory<IDatastoreService>, iamService: IIamService, eventAggregator: IEventAggregator);
-    private readonly datastoreService;
+    constructor(datastoreServiceFactory: IFactoryAsync<IDatastoreService>, iamService: IIamService, eventAggregator: IEventAggregator);
+    private getDatastoreService();
     private readonly iamService;
     private readonly eventAggregator;
-    initialize(context: ExecutionContext): Promise<void>;
+    initialize(): Promise<void>;
     cancel(timerId: string, context: ExecutionContext): Promise<void>;
     once(date: moment.Moment, eventName: string, context: ExecutionContext): Promise<string>;
     periodic(rule: ITimingRule, eventName: string, context: ExecutionContext): Promise<string>;

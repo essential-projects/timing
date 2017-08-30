@@ -1,7 +1,8 @@
 import {IEventAggregator} from '@process-engine-js/event_aggregator_contracts';
-import {ExecutionContext, IFactory, IPrivateQueryOptions, IIamService} from '@process-engine-js/core_contracts';
+import {ExecutionContext, IPrivateQueryOptions, IIamService} from '@process-engine-js/core_contracts';
 import {ITimingService, ITimingRule, ITimerEntity, TimerType} from '@process-engine-js/timing_contracts';
 import {IDatastoreService, IEntityType} from '@process-engine-js/data_model_contracts';
+import {IFactoryAsync} from 'addict-ioc'
 
 import * as schedule from 'node-schedule';
 import * as moment from 'moment';
@@ -14,22 +15,22 @@ export class TimingService implements ITimingService {
 
   private _jobs: IJobsCache = {};
 
-  private _datastoreServiceFactory: IFactory<IDatastoreService> = undefined;
+  private _datastoreServiceFactory: IFactoryAsync<IDatastoreService> = undefined;
   private _datastoreService: IDatastoreService = undefined;
   private _iamService: IIamService = undefined;
   private _eventAggregator: IEventAggregator = undefined;
 
   public config: any = undefined;
 
-  constructor(datastoreServiceFactory: IFactory<IDatastoreService>, iamService: IIamService, eventAggregator: IEventAggregator) {
+  constructor(datastoreServiceFactory: IFactoryAsync<IDatastoreService>, iamService: IIamService, eventAggregator: IEventAggregator) {
     this._datastoreServiceFactory = datastoreServiceFactory;
     this._iamService = iamService;
     this._eventAggregator = eventAggregator;
   }
 
-  private get datastoreService(): IDatastoreService {
+  private async getDatastoreService(): Promise<IDatastoreService> {
     if (!this._datastoreService) {
-      this._datastoreService = this._datastoreServiceFactory();
+      this._datastoreService = await this._datastoreServiceFactory();
     }
     return this._datastoreService;
   }
@@ -42,7 +43,8 @@ export class TimingService implements ITimingService {
     return this._eventAggregator;
   }
 
-  public async initialize(context: ExecutionContext): Promise<void> {
+  public async initialize(): Promise<void> {
+    const context: ExecutionContext = await this._getContext();
     return this._restorePersistedJobs(context);
   }
 
@@ -118,8 +120,10 @@ export class TimingService implements ITimingService {
     }
   }
 
-  private _getTimerEntityType(): Promise<IEntityType<ITimerEntity>> {
-    return this.datastoreService.getEntityType('Timer');
+  private async _getTimerEntityType(): Promise<IEntityType<ITimerEntity>> {
+    const datastoreService = await this.getDatastoreService();
+    const entityType = await datastoreService.getEntityType<ITimerEntity>('Timer');
+    return entityType;
   }
 
   private async _getTimerEntityById(timerId: string, context: ExecutionContext): Promise<ITimerEntity> {
@@ -208,7 +212,6 @@ export class TimingService implements ITimingService {
   private async _restorePersistedJobs(context: ExecutionContext): Promise<void> {
 
     const timerEntityType = await this._getTimerEntityType();
-
     const timerOnceQuery = {
       operator: 'and',
       queries: [{
@@ -236,7 +239,6 @@ export class TimingService implements ITimingService {
     };
 
     const timerEntities = await timerEntityType.all(context, queryOptions);
-
     timerEntities.data.forEach((timerEntity: ITimerEntity) => {
 
       const timerValue = timerEntity.timerType === TimerType.periodic ? timerEntity.timerRule : timerEntity.timerIsoString;

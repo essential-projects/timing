@@ -14,9 +14,9 @@ class TimingService {
         this._iamService = iamService;
         this._eventAggregator = eventAggregator;
     }
-    get datastoreService() {
+    async getDatastoreService() {
         if (!this._datastoreService) {
-            this._datastoreService = this._datastoreServiceFactory();
+            this._datastoreService = await this._datastoreServiceFactory();
         }
         return this._datastoreService;
     }
@@ -26,7 +26,8 @@ class TimingService {
     get eventAggregator() {
         return this._eventAggregator;
     }
-    async initialize(context) {
+    async initialize() {
+        const context = await this._getContext();
         return this._restorePersistedJobs(context);
     }
     async cancel(timerId, context) {
@@ -70,8 +71,10 @@ class TimingService {
             delete this._jobs[timerId];
         }
     }
-    _getTimerEntityType() {
-        return this.datastoreService.getEntityType('Timer');
+    async _getTimerEntityType() {
+        const datastoreService = await this.getDatastoreService();
+        const entityType = await datastoreService.getEntityType('Timer');
+        return entityType;
     }
     async _getTimerEntityById(timerId, context) {
         const timerEntityType = await this._getTimerEntityType();
