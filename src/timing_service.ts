@@ -1,11 +1,11 @@
-import {IEventAggregator} from '@process-engine-js/event_aggregator_contracts';
-import {ExecutionContext, IPrivateQueryOptions, IIamService} from '@process-engine-js/core_contracts';
-import {ITimingService, ITimingRule, ITimerEntity, TimerType} from '@process-engine-js/timing_contracts';
+import {ExecutionContext, IIamService, IPrivateQueryOptions} from '@process-engine-js/core_contracts';
 import {IDatastoreService, IEntityType} from '@process-engine-js/data_model_contracts';
-import {IFactoryAsync} from 'addict-ioc'
+import {IEventAggregator} from '@process-engine-js/event_aggregator_contracts';
+import {ITimerEntity, ITimingRule, ITimingService, TimerType} from '@process-engine-js/timing_contracts';
+import {IFactoryAsync} from 'addict-ioc';
 
-import * as schedule from 'node-schedule';
 import * as moment from 'moment';
+import * as schedule from 'node-schedule';
 
 interface IJobsCache {
   [timerId: string]: schedule.Job;
@@ -163,7 +163,7 @@ export class TimingService implements ITimingService {
       timerType: timerType,
       timerIsoString: timerDate ? timerDate.toISOString() : null,
       timerRule: timerRule,
-      eventName: eventName
+      eventName: eventName,
     };
 
     const timerEntity = await timerEntityType.createEntity<ITimerEntity>(context, timerData, createOptions);
@@ -181,7 +181,7 @@ export class TimingService implements ITimingService {
 
   private _createJob(timerId: string, timerValue: ITimingRule | string | Date, eventName: string): schedule.Job {
 
-    const job = schedule.scheduleJob(timerValue, async () => {
+    const job = schedule.scheduleJob(timerValue, async() => {
       return this._timerElapsed(timerId, eventName);
     });
 
@@ -217,25 +217,25 @@ export class TimingService implements ITimingService {
       queries: [{
         attribute: 'lastElapsed',
         operator: '=',
-        value: null
+        value: null,
       }, {
         attribute: 'timerType',
         operator: '=',
-        value: TimerType.once
-      }]
+        value: TimerType.once,
+      }],
     };
 
     const otherTimersQuery = {
       attribute: 'timerType',
       operator: '!=',
-      value: TimerType.once
+      value: TimerType.once,
     };
 
     const queryOptions: IPrivateQueryOptions = {
       query: {
         operator: 'or',
-        queries: [timerOnceQuery, otherTimersQuery]
-      }
+        queries: [timerOnceQuery, otherTimersQuery],
+      },
     };
 
     const timerEntities = await timerEntityType.all(context, queryOptions);

@@ -1,7 +1,7 @@
+import {ExecutionContext, IEntity, IInheritedSchema, SchemaAttributeType} from '@process-engine-js/core_contracts';
 import {Entity, EntityDependencyHelper, IEntityType, IPropertyBag} from '@process-engine-js/data_model_contracts';
-import {ExecutionContext, SchemaAttributeType, IEntity, IInheritedSchema} from '@process-engine-js/core_contracts';
-import {ITimerEntity, TimerType, ITimingRule} from '@process-engine-js/timing_contracts';
 import {schemaAttribute} from '@process-engine-js/metadata';
+import {ITimerEntity, ITimingRule, TimerType} from '@process-engine-js/timing_contracts';
 
 export class TimerEntity extends Entity implements ITimerEntity {
 
