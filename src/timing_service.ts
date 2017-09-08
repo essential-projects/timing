@@ -168,7 +168,7 @@ export class TimingService implements ITimingService {
 
     const timerEntity = await timerEntityType.createEntity<ITimerEntity>(context, timerData, createOptions);
 
-    const timerValue = timerType === TimerType.periodic ? timerRule : timerDate.toDate();
+    const timerValue: ITimingRule | Date = timerType === TimerType.periodic ? timerRule : timerDate.toDate();
 
     this._createJob(timerEntity.id, timerValue, eventName);
 
@@ -179,7 +179,7 @@ export class TimingService implements ITimingService {
     return timerEntity.id;
   }
 
-  private _createJob(timerId: string, timerValue: Date | ITimingRule, eventName: string): schedule.Job {
+  private _createJob(timerId: string, timerValue: ITimingRule | string | Date, eventName: string): schedule.Job {
 
     const job = schedule.scheduleJob(timerValue, async () => {
       return this._timerElapsed(timerId, eventName);
@@ -241,7 +241,7 @@ export class TimingService implements ITimingService {
     const timerEntities = await timerEntityType.all(context, queryOptions);
     timerEntities.data.forEach((timerEntity: ITimerEntity) => {
 
-      const timerValue = timerEntity.timerType === TimerType.periodic ? timerEntity.timerRule : timerEntity.timerIsoString;
+      const timerValue: ITimingRule | string = timerEntity.timerType === TimerType.periodic ? timerEntity.timerRule : timerEntity.timerIsoString;
 
       this._createJob(timerEntity.id, timerValue, timerEntity.eventName);
     });
