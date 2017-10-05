@@ -200,7 +200,7 @@ export class TimingService implements ITimingService {
 
     const createOptions = {};
 
-    const timerEntity = await timerEntityType.createEntity<ITimerEntity>(context, timerData, createOptions);
+    const timerEntity = await timerEntityType.createEntity(context, timerData, createOptions);
 
     const saveOptions = {};
 
