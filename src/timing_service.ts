@@ -1,7 +1,7 @@
-import {ExecutionContext, IIamService, IPrivateQueryOptions} from '@process-engine-js/core_contracts';
-import {IDatastoreService, IEntityType} from '@process-engine-js/data_model_contracts';
-import {IEventAggregator} from '@process-engine-js/event_aggregator_contracts';
-import {ITimerEntity, ITimingRule, ITimingService, TimerType} from '@process-engine-js/timing_contracts';
+import {ExecutionContext, IIamService, IPrivateQueryOptions} from '@essential-projects/core_contracts';
+import {IDatastoreService, IEntityType} from '@essential-projects/data_model_contracts';
+import {IEventAggregator} from '@essential-projects/event_aggregator_contracts';
+import {ITimerEntity, ITimingRule, ITimingService, TimerType} from '@essential-projects/timing_contracts';
 import {IFactoryAsync} from 'addict-ioc';
 
 import * as moment from 'moment';

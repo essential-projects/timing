@@ -4,7 +4,7 @@ const TimingService = require('./dist/commonjs/index').TimingService;
 
 const TimerEntity = require('./dist/commonjs/index').TimerEntity;
 
-const entityDiscoveryTag = require('@process-engine-js/core_contracts').EntityDiscoveryTag;
+const entityDiscoveryTag = require('@essential-projects/core_contracts').EntityDiscoveryTag;
 
 function registerInContainer(container) {
 
