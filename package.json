@@ -21,7 +21,7 @@
     "@essential-projects/timing_contracts": "^0.1.0",
     "addict-ioc": "^2.2.8",
     "debug": "^2.6.1",
-    "moment": "^2.18.1",
+    "moment": "2.18.1",
     "node-schedule": "^1.2.1"
   },
   "devDependencies": {
