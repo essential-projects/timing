@@ -1,4 +1,4 @@
-import {ExecutionContext, IEntity, IInheritedSchema, SchemaAttributeType} from '@essential-projects/core_contracts';
+import {ExecutionContext, IEntity, IFromPojoOptions, IInheritedSchema, SchemaAttributeType} from '@essential-projects/core_contracts';
 import {Entity, EntityDependencyHelper, IEntityType, IPropertyBag} from '@essential-projects/data_model_contracts';
 import {schemaAttribute} from '@essential-projects/metadata';
 import {ITimerEntity, ITimingRule, TimerType} from '@essential-projects/timing_contracts';
@@ -9,8 +9,9 @@ export class TimerEntity extends Entity implements ITimerEntity {
               context: ExecutionContext,
               schema: IInheritedSchema,
               propertyBag: IPropertyBag,
-              entityType: IEntityType<IEntity>) {
-    super(entityDependencyHelper, context, schema, propertyBag, entityType);
+              entityType: IEntityType<IEntity>,
+              options?: IFromPojoOptions) {
+    super(entityDependencyHelper, context, schema, propertyBag, entityType, options);
   }
 
   public async initialize(): Promise<void> {
