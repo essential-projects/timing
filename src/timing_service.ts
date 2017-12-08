@@ -170,13 +170,33 @@ export class TimingService implements ITimingService {
 
     const timerValue: ITimingRule | Date = timerType === TimerType.periodic ? timerRule : timerDate.toDate();
 
-    this._createJob(timerEntity.id, timerValue, eventName);
+    if (this._isValidTimer(timerEntity)) {
+      this._createJob(timerEntity.id, timerValue, eventName);
+    }
 
     const saveOptions = {};
 
     await timerEntity.save(context, saveOptions);
 
     return timerEntity.id;
+  }
+
+  // TODO: Maybe enhance with additional validations for other timerTypes?
+  private _isValidTimer(timer: ITimerEntity): boolean {
+
+    let isValidTimer: boolean = true;
+
+    if (timer.timerType === 0) {
+
+      const timerDate: moment.Moment = moment(timer.timerIsoString);
+      const now: moment.Moment = moment();
+
+      const exectionTimeIsPast: boolean = timerDate.isBefore(now);
+
+      isValidTimer = timer.lastElapsed !== null || !exectionTimeIsPast;
+    }
+
+    return isValidTimer;
   }
 
   private _createJob(timerId: string, timerValue: ITimingRule | string | Date, eventName: string): schedule.Job {
@@ -241,9 +261,10 @@ export class TimingService implements ITimingService {
     const timerEntities = await timerEntityType.all(context, queryOptions);
     timerEntities.data.forEach((timerEntity: ITimerEntity) => {
 
-      const timerValue: ITimingRule | string = timerEntity.timerType === TimerType.periodic ? timerEntity.timerRule : timerEntity.timerIsoString;
-
-      this._createJob(timerEntity.id, timerValue, timerEntity.eventName);
+      if (this._isValidTimer(timerEntity)) {
+        const timerValue: ITimingRule | string = timerEntity.timerType === TimerType.periodic ? timerEntity.timerRule : timerEntity.timerIsoString;
+        this._createJob(timerEntity.id, timerValue, timerEntity.eventName);
+      }
     });
   }
 }
