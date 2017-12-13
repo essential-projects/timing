@@ -3,7 +3,7 @@
   "publishConfig": {
     "registry": "https://www.npmjs.com"
   },
-  "version": "0.1.2",
+  "version": "0.1.3-mcp.0",
   "description": "components for timing",
   "license": "MIT",
   "main": "dist/commonjs/index.js",
@@ -14,8 +14,8 @@
     "Simon Reymann <simon.reymann@quantusflow.com>"
   ],
   "dependencies": {
-    "@essential-projects/core_contracts": "^0.2.1",
-    "@essential-projects/data_model_contracts": "^0.2.0",
+    "@essential-projects/core_contracts": "0.2.3-mcp.0",
+    "@essential-projects/data_model_contracts": "0.2.6-mcp.0",
     "@essential-projects/event_aggregator_contracts": "^0.1.0",
     "@essential-projects/metadata": "^0.1.0",
     "@essential-projects/timing_contracts": "^0.1.0",
