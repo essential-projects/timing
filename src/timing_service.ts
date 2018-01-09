@@ -170,7 +170,9 @@ export class TimingService implements ITimingService {
 
     const timerValue: ITimingRule | Date = timerType === TimerType.periodic ? timerRule : timerDate.toDate();
 
-    if (this._isValidTimer(timerEntity)) {
+    const isValidTimerEntity: Boolean = this._isValidTimer(timerEntity)
+
+    if (isValidTimerEntity) {
       this._createJob(timerEntity.id, timerValue, eventName);
     }
 
@@ -185,15 +187,16 @@ export class TimingService implements ITimingService {
   private _isValidTimer(timer: ITimerEntity): boolean {
 
     let isValidTimer: boolean = true;
+    const oneShotTimerType: number = 0;
 
-    if (timer.timerType === 0) {
+    if (timer.timerType === oneShotTimerType) {
 
       const timerDate: moment.Moment = moment(timer.timerIsoString);
       const now: moment.Moment = moment();
 
-      const exectionTimeIsPast: boolean = timerDate.isBefore(now);
+      const exectionTimeIsBefore: boolean = timerDate.isAfter(now);
 
-      isValidTimer = timer.lastElapsed !== null || !exectionTimeIsPast;
+      isValidTimer = timer.lastElapsed !== null || exectionTimeIsBefore;
     }
 
     return isValidTimer;
@@ -261,7 +264,9 @@ export class TimingService implements ITimingService {
     const timerEntities = await timerEntityType.all(context, queryOptions);
     timerEntities.data.forEach((timerEntity: ITimerEntity) => {
 
-      if (this._isValidTimer(timerEntity)) {
+      const isValidTimerEntity: Boolean = this._isValidTimer(timerEntity)
+
+      if (isValidTimerEntity) {
         const timerValue: ITimingRule | string = timerEntity.timerType === TimerType.periodic ? timerEntity.timerRule : timerEntity.timerIsoString;
         this._createJob(timerEntity.id, timerValue, timerEntity.eventName);
       }
