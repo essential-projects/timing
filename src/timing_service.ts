@@ -22,6 +22,8 @@ export class TimingService implements ITimingService {
 
   public config: any = undefined;
 
+  private oneShotTimerType: number = 0;
+
   constructor(datastoreServiceFactory: IFactoryAsync<IDatastoreService>, iamService: IIamService, eventAggregator: IEventAggregator) {
     this._datastoreServiceFactory = datastoreServiceFactory;
     this._iamService = iamService;
@@ -170,13 +172,35 @@ export class TimingService implements ITimingService {
 
     const timerValue: ITimingRule | Date = timerType === TimerType.periodic ? timerRule : timerDate.toDate();
 
-    this._createJob(timerEntity.id, timerValue, eventName);
+    const timerIsValidTimerEntry: Boolean = this._isValidTimer(timerEntity);
+
+    if (timerIsValidTimerEntry) {
+      this._createJob(timerEntity.id, timerValue, eventName);
+    }
 
     const saveOptions = {};
 
     await timerEntity.save(context, saveOptions);
 
     return timerEntity.id;
+  }
+
+  // TODO: Maybe enhance with additional validations for other timerTypes?
+  private _isValidTimer(timer: ITimerEntity): boolean {
+
+    const timerIsOneShotTimer: boolean = timer.timerType === oneShotTimerType;
+
+    if (timerIsOneShotTimer) {
+
+      const timerDate: moment.Moment = moment(timer.timerIsoString);
+      const now: moment.Moment = moment();
+
+      const exectionTimeIsBefore: boolean = timerDate.isAfter(now);
+
+      isValidTimer = timer.lastElapsed !== null || exectionTimeIsBefore;
+    }
+
+    return isValidTimer;
   }
 
   private _createJob(timerId: string, timerValue: ITimingRule | string | Date, eventName: string): schedule.Job {
@@ -241,9 +265,12 @@ export class TimingService implements ITimingService {
     const timerEntities = await timerEntityType.all(context, queryOptions);
     timerEntities.data.forEach((timerEntity: ITimerEntity) => {
 
-      const timerValue: ITimingRule | string = timerEntity.timerType === TimerType.periodic ? timerEntity.timerRule : timerEntity.timerIsoString;
+      const timerIsValidTimerEntry: Boolean = this._isValidTimer(timerEntity);
 
-      this._createJob(timerEntity.id, timerValue, timerEntity.eventName);
+      if (timerIsValidTimerEntry) {
+        const timerValue: ITimingRule | string = timerEntity.timerType === TimerType.periodic ? timerEntity.timerRule : timerEntity.timerIsoString;
+        this._createJob(timerEntity.id, timerValue, timerEntity.eventName);
+      }
     });
   }
 }
