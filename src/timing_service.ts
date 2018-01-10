@@ -22,6 +22,8 @@ export class TimingService implements ITimingService {
 
   public config: any = undefined;
 
+  private oneShotTimerType: number = 0;
+
   constructor(datastoreServiceFactory: IFactoryAsync<IDatastoreService>, iamService: IIamService, eventAggregator: IEventAggregator) {
     this._datastoreServiceFactory = datastoreServiceFactory;
     this._iamService = iamService;
@@ -170,9 +172,9 @@ export class TimingService implements ITimingService {
 
     const timerValue: ITimingRule | Date = timerType === TimerType.periodic ? timerRule : timerDate.toDate();
 
-    const isValidTimerEntity: Boolean = this._isValidTimer(timerEntity)
+    const timerIsValidTimerEntry: Boolean = this._isValidTimer(timerEntity);
 
-    if (isValidTimerEntity) {
+    if (timerIsValidTimerEntry) {
       this._createJob(timerEntity.id, timerValue, eventName);
     }
 
@@ -186,10 +188,9 @@ export class TimingService implements ITimingService {
   // TODO: Maybe enhance with additional validations for other timerTypes?
   private _isValidTimer(timer: ITimerEntity): boolean {
 
-    let isValidTimer: boolean = true;
-    const oneShotTimerType: number = 0;
+    const timerIsOneShotTimer: boolean = timer.timerType === oneShotTimerType;
 
-    if (timer.timerType === oneShotTimerType) {
+    if (timerIsOneShotTimer) {
 
       const timerDate: moment.Moment = moment(timer.timerIsoString);
       const now: moment.Moment = moment();
@@ -264,9 +265,9 @@ export class TimingService implements ITimingService {
     const timerEntities = await timerEntityType.all(context, queryOptions);
     timerEntities.data.forEach((timerEntity: ITimerEntity) => {
 
-      const isValidTimerEntity: Boolean = this._isValidTimer(timerEntity)
+      const timerIsValidTimerEntry: Boolean = this._isValidTimer(timerEntity);
 
-      if (isValidTimerEntity) {
+      if (timerIsValidTimerEntry) {
         const timerValue: ITimingRule | string = timerEntity.timerType === TimerType.periodic ? timerEntity.timerRule : timerEntity.timerIsoString;
         this._createJob(timerEntity.id, timerValue, timerEntity.eventName);
       }
