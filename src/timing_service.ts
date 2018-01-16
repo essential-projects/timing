@@ -188,7 +188,9 @@ export class TimingService implements ITimingService {
   // TODO: Maybe enhance with additional validations for other timerTypes?
   private _isValidTimer(timer: ITimerEntity): boolean {
 
-    const timerIsOneShotTimer: boolean = timer.timerType === oneShotTimerType;
+    const timerIsOneShotTimer: boolean = timer.timerType === this.oneShotTimerType;
+
+    let isValidTimer: boolean = true;
 
     if (timerIsOneShotTimer) {
 
