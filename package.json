@@ -3,7 +3,7 @@
   "publishConfig": {
     "registry": "https://www.npmjs.com"
   },
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "components for timing",
   "license": "MIT",
   "main": "dist/commonjs/index.js",
@@ -36,7 +36,7 @@
   },
   "scripts": {
     "build": "gulp build",
-    "prepare": "npm run build && npm run build-schemas && npm run build-doc",
+    "prepare": "npm run build",
     "build-doc": "gulp doc",
     "build-schemas": "gulp typescript-schema",
     "lint": "gulp lint",
