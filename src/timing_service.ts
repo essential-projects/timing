@@ -1,8 +1,5 @@
-import {ExecutionContext, IIamService, IPrivateQueryOptions} from '@essential-projects/core_contracts';
-import {IDatastoreService, IEntityType} from '@essential-projects/data_model_contracts';
 import {IEventAggregator} from '@essential-projects/event_aggregator_contracts';
-import {ITimerEntity, ITimingRule, ITimingService, TimerType} from '@essential-projects/timing_contracts';
-import {IFactoryAsync} from 'addict-ioc';
+import {ITimerEntity, ITimingRule, ITimerRepository, Timer, ITimingService, TimerType} from '@essential-projects/timing_contracts';
 
 import * as moment from 'moment';
 import * as schedule from 'node-schedule';
@@ -15,42 +12,27 @@ export class TimingService implements ITimingService {
 
   private _jobs: IJobsCache = {};
 
-  private _datastoreServiceFactory: IFactoryAsync<IDatastoreService> = undefined;
-  private _datastoreService: IDatastoreService = undefined;
-  private _iamService: IIamService = undefined;
   private _eventAggregator: IEventAggregator = undefined;
+  private _timerRepository: ITimerRepository = undefined;
 
   public config: any = undefined;
 
   private oneShotTimerType: number = 0;
 
-  constructor(datastoreServiceFactory: IFactoryAsync<IDatastoreService>, iamService: IIamService, eventAggregator: IEventAggregator) {
-    this._datastoreServiceFactory = datastoreServiceFactory;
-    this._iamService = iamService;
+  constructor(eventAggregator: IEventAggregator, timerRepository: ITimerRepository) {
     this._eventAggregator = eventAggregator;
-  }
-
-  private async getDatastoreService(): Promise<IDatastoreService> {
-    if (!this._datastoreService) {
-      this._datastoreService = await this._datastoreServiceFactory();
-    }
-    return this._datastoreService;
-  }
-
-  private get iamService(): IIamService {
-    return this._iamService;
+    this._timerRepository = timerRepository;
   }
 
   private get eventAggregator(): IEventAggregator {
     return this._eventAggregator;
   }
 
-  public async initialize(): Promise<void> {
-    const context: ExecutionContext = await this._getContext();
-    return this._restorePersistedJobs(context);
+  private get timerRepository(): ITimerRepository {
+    return this._timerRepository;
   }
 
-  public async cancel(timerId: string, context: ExecutionContext): Promise<void> {
+  public async cancel(timerId: string): Promise<void> {
 
     const job = this._getJob(timerId);
 
@@ -61,51 +43,36 @@ export class TimingService implements ITimingService {
       this._removeJob(timerId);
     }
 
-    return this._removeTimerEntity(timerId, context);
+    return this._removeTimer(timerId);
   }
 
-  public async once(date: moment.Moment, eventName: string, context: ExecutionContext): Promise<string> {
+  public async once(date: moment.Moment, eventName: string): Promise<string> {
 
     if (!date) {
       throw new Error('invalid date');
     }
 
-    return this._createTimer(TimerType.once, date, undefined, eventName, context);
+    return this._createTimer(TimerType.once, date, undefined, eventName);
   }
 
-  public async periodic(rule: ITimingRule, eventName: string, context: ExecutionContext): Promise<string> {
+  public async periodic(rule: ITimingRule, eventName: string): Promise<string> {
 
     if (!rule) {
       throw new Error('invalid date');
     }
 
-    return this._createTimer(TimerType.periodic, undefined, rule, eventName, context);
+    return this._createTimer(TimerType.periodic, undefined, rule, eventName);
   }
-
-  // public async cron(cronString: string, eventName: string, context: ExecutionContext): Promise<string> {
-
-  //   if (!cronString) {
-  //     throw new Error('invalid cron input');
-  //   }
-
-  //   return this._createTimer(TimerType.cron, cronString, eventName, context);
-  // }
 
   private async _timerElapsed(timerId: string, eventName: string): Promise<void> {
 
-    const context = await this._getContext();
+    const timer = await this._getTimerById(timerId);
 
-    const timerEntity = await this._getTimerEntityById(timerId, context);
+    timer.lastElapsed = new Date();
 
-    timerEntity.lastElapsed = new Date();
-
-    await timerEntity.save(context);
+    await this.timerRepository.save(timer);
 
     this.eventAggregator.publish(eventName);
-  }
-
-  private _getContext(): Promise<ExecutionContext> {
-    return this.iamService.createInternalContext(this.config.systemUserId);
   }
 
   private _getJob(timerId: string): schedule.Job {
@@ -122,70 +89,48 @@ export class TimingService implements ITimingService {
     }
   }
 
-  private async _getTimerEntityType(): Promise<IEntityType<ITimerEntity>> {
-    const datastoreService = await this.getDatastoreService();
-    const entityType = await datastoreService.getEntityType<ITimerEntity>('Timer');
-    return entityType;
-  }
+  private async _getTimerById(timerId: string): Promise<Timer> {
 
-  private async _getTimerEntityById(timerId: string, context: ExecutionContext): Promise<ITimerEntity> {
+    const timer = await this._timerRepository.getById(timerId);
 
-    const timerEntityType = await this._getTimerEntityType();
-
-    const getOptions = {};
-
-    const timerEntity = await timerEntityType.getById(timerId, context, getOptions);
-
-    if (!timerEntity) {
+    if (!timer) {
       throw new Error(`an error occured during cancellation of job with id "${timerId}": not found`);
     }
 
-    return timerEntity;
+    return timer;
   }
 
-  private async _removeTimerEntity(timerId: string, context: ExecutionContext): Promise<void> {
+  private async _removeTimer(timerId: string): Promise<void> {
 
-    const timerEntity = await this._getTimerEntityById(timerId, context);
+    const timer = await this._getTimerById(timerId);
 
-    if (timerEntity) {
-
-      const removeOptions = {};
-
-      await timerEntity.remove(context, removeOptions);
+    if (timer) {
+      await this.timerRepository.removeById(timer.id);
     }
   }
 
-  private async _createTimer(timerType: TimerType, timerDate: moment.Moment, timerRule: ITimingRule, eventName: string, context: ExecutionContext): Promise<string> {
+  private async _createTimer(timerType: TimerType, timerDate: moment.Moment, timerRule: ITimingRule, eventName: string): Promise<string> {
 
-    const timerEntityType = await this._getTimerEntityType();
+    const timer = new Timer();
 
-    const createOptions = {};
-
-    const timerData = {
-      timerType: timerType,
-      timerIsoString: timerDate ? timerDate.toISOString() : null,
-      timerRule: timerRule,
-      eventName: eventName,
-    };
-
-    const timerEntity = await timerEntityType.createEntity(context, timerData, createOptions);
+    timer.timerType = timerType;
+    timer.timerIsoString = timerDate ? timerDate.toISOString() : null;
+    timer.timerRule = timerRule;
+    timer.eventName = eventName;
 
     const timerValue: ITimingRule | Date = timerType === TimerType.periodic ? timerRule : timerDate.toDate();
 
-    const timerIsValidTimerEntry: Boolean = this._isValidTimer(timerEntity);
+    const timerIsValidTimerEntry: Boolean = this._isValidTimer(timer);
 
     if (timerIsValidTimerEntry) {
-      this._createJob(timerEntity.id, timerValue, eventName);
+      this._createJob(timer.id, timerValue, eventName);
     }
 
-    const saveOptions = {};
+    await this.timerRepository.save(timer);
 
-    await timerEntity.save(context, saveOptions);
-
-    return timerEntity.id;
+    return timer.id;
   }
 
-  // TODO: Maybe enhance with additional validations for other timerTypes?
   private _isValidTimer(timer: ITimerEntity): boolean {
 
     const timerIsOneShotTimer: boolean = timer.timerType === this.oneShotTimerType;
@@ -220,59 +165,18 @@ export class TimingService implements ITimingService {
     return job;
   }
 
-  private async _createTimerEntity(timerData: any, context: ExecutionContext): Promise<ITimerEntity> {  // tslint:disable-line no-unused-variable
+  public async restorePersistedJobs(): Promise<void> {
 
-    const timerEntityType = await this._getTimerEntityType();
+    const timers = await this.timerRepository.all();
 
-    const createOptions = {};
+    for (const timer of timers) {
 
-    const timerEntity = await timerEntityType.createEntity(context, timerData, createOptions);
-
-    const saveOptions = {};
-
-    await timerEntity.save(context, saveOptions);
-
-    return timerEntity;
-  }
-
-  private async _restorePersistedJobs(context: ExecutionContext): Promise<void> {
-
-    const timerEntityType = await this._getTimerEntityType();
-    const timerOnceQuery = {
-      operator: 'and',
-      queries: [{
-        attribute: 'lastElapsed',
-        operator: '=',
-        value: null,
-      }, {
-        attribute: 'timerType',
-        operator: '=',
-        value: TimerType.once,
-      }],
-    };
-
-    const otherTimersQuery = {
-      attribute: 'timerType',
-      operator: '!=',
-      value: TimerType.once,
-    };
-
-    const queryOptions: IPrivateQueryOptions = {
-      query: {
-        operator: 'or',
-        queries: [timerOnceQuery, otherTimersQuery],
-      },
-    };
-
-    const timerEntities = await timerEntityType.all(context, queryOptions);
-    timerEntities.data.forEach((timerEntity: ITimerEntity) => {
-
-      const timerIsValidTimerEntry: Boolean = this._isValidTimer(timerEntity);
+      const timerIsValidTimerEntry: Boolean = this._isValidTimer(timer);
 
       if (timerIsValidTimerEntry) {
-        const timerValue: ITimingRule | string = timerEntity.timerType === TimerType.periodic ? timerEntity.timerRule : timerEntity.timerIsoString;
-        this._createJob(timerEntity.id, timerValue, timerEntity.eventName);
+        const timerValue: ITimingRule | string = timer.timerType === TimerType.periodic ? timer.timerRule : timer.timerIsoString;
+        this._createJob(timer.id, timerValue, timer.eventName);
       }
-    });
+    }
   }
 }
