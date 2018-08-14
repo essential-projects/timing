@@ -3,7 +3,7 @@
   "publishConfig": {
     "registry": "https://www.npmjs.com"
   },
-  "version": "2.0.1",
+  "version": "3.0.0",
   "description": "components for timing",
   "license": "MIT",
   "main": "dist/commonjs/index.js",
