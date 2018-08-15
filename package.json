@@ -3,7 +3,7 @@
   "publishConfig": {
     "registry": "https://www.npmjs.com"
   },
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "components for timing",
   "license": "MIT",
   "main": "dist/commonjs/index.js",
@@ -15,7 +15,7 @@
     "Simon Reymann <simon.reymann@quantusflow.com>"
   ],
   "dependencies": {
-    "@essential-projects/event_aggregator_contracts": "^2.0.0",
+    "@essential-projects/event_aggregator_contracts": "^3.0.0",
     "@essential-projects/timing_contracts": "^3.0.0",
     "addict-ioc": "^2.2.8",
     "debug": "^2.6.1",
