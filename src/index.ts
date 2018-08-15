@@ -1,1 +1,1 @@
-export * from './timing_service';
+export * from './timer_service';
