@@ -1,8 +1,9 @@
 import {IEventAggregator} from '@essential-projects/event_aggregator_contracts';
-import {ITimerRepository, ITimerService, TimerType, TimerRule, Timer} from '@essential-projects/timing_contracts';
+import {ITimerService, Timer, TimerRule, TimerType} from '@essential-projects/timing_contracts';
 
 import * as moment from 'moment';
 import * as schedule from 'node-schedule';
+import * as uuid from 'uuid';
 
 interface IJobsCache {
   [timerId: string]: schedule.Job;
@@ -13,30 +14,20 @@ export class TimerService implements ITimerService {
   private _jobs: IJobsCache = {};
 
   private _eventAggregator: IEventAggregator = undefined;
-  private _timerRepository: ITimerRepository = undefined;
 
   public config: any = undefined;
 
   private oneShotTimerType: number = 0;
 
-  constructor(eventAggregator: IEventAggregator, timerRepository: ITimerRepository) {
+  constructor(eventAggregator: IEventAggregator) {
     this._eventAggregator = eventAggregator;
-    this._timerRepository = timerRepository;
   }
 
   private get eventAggregator(): IEventAggregator {
     return this._eventAggregator;
   }
 
-  private get timerRepository(): ITimerRepository {
-    return this._timerRepository;
-  }
-
-  public async initialize(): Promise<void> {
-    return this.restorePersistedJobs();
-  }
-
-  public async cancel(timerId: string): Promise<void> {
+  public cancel(timerId: string): void {
 
     const job: schedule.Job = this._getJob(timerId);
 
@@ -44,11 +35,9 @@ export class TimerService implements ITimerService {
       schedule.cancelJob(job);
       this._removeJob(timerId);
     }
-
-    await this.timerRepository.removeById(timerId);
   }
 
-  public async once(date: moment.Moment, eventName: string): Promise<string> {
+  public once(date: moment.Moment, eventName: string): string {
 
     if (!date) {
       throw new Error('Must provide an expiration date for a one-shot timer!');
@@ -57,7 +46,7 @@ export class TimerService implements ITimerService {
     return this._createTimer(TimerType.once, date, undefined, eventName);
   }
 
-  public async periodic(rule: TimerRule, eventName: string): Promise<string> {
+  public periodic(rule: TimerRule, eventName: string): string {
 
     if (!rule) {
       throw new Error('Must provide a rule for a periodic timer!');
@@ -66,10 +55,10 @@ export class TimerService implements ITimerService {
     return this._createTimer(TimerType.periodic, undefined, rule, eventName);
   }
 
-  private async _createTimer(timerType: TimerType,
-                             timerDate: moment.Moment,
-                             timerRule: TimerRule,
-                             eventName: string): Promise<string> {
+  private _createTimer(timerType: TimerType,
+                       timerDate: moment.Moment,
+                       timerRule: TimerRule,
+                       eventName: string): string {
 
     const timerData: any = {
       type: timerType,
@@ -80,44 +69,12 @@ export class TimerService implements ITimerService {
 
     const timerIsValidTimerEntry: Boolean = this._isValidTimer(timerData);
 
-    const createdTimerId: string = await this.timerRepository.create(timerData);
-
     if (timerIsValidTimerEntry) {
-      timerData.id = createdTimerId;
-      this._createJob(createdTimerId, timerData, eventName);
+      timerData.id = uuid.v4();
+      this._createJob(timerData.id, timerData, eventName);
     }
 
-    return createdTimerId;
-  }
-
-  public async restorePersistedJobs(): Promise<void> {
-
-    const persistedTimers: Array<Timer> = await this.timerRepository.getAll();
-
-    const filteredTimers: Array<Timer> = this._getValidTimersToRestoreFromList(persistedTimers);
-
-    for (const timer of filteredTimers) {
-      const timerIsValidTimerEntry: Boolean = this._isValidTimer(timer);
-
-      if (timerIsValidTimerEntry) {
-        this._createJob(timer.id, timer, timer.eventName);
-      }
-    }
-  }
-
-  private _getValidTimersToRestoreFromList(timers: Array<Timer>): Array<Timer> {
-
-    const filteredTimers: Array<Timer> = timers.filter((timer: Timer): boolean => {
-
-      const isNotOneShotTimer: boolean = timer.type !== TimerType.once;
-      const isValidOneShotTimer: boolean =
-        timer.type === TimerType.once &&
-        (timer.lastElapsed === undefined || timer.lastElapsed === null);
-
-      return isNotOneShotTimer || isValidOneShotTimer;
-    });
-
-    return filteredTimers;
+    return timerData.id;
   }
 
   private _isValidTimer(timer: Timer): boolean {
@@ -149,8 +106,8 @@ export class TimerService implements ITimerService {
         ? timer.rule
         : timer.expirationDate.toDate();
 
-    const job: schedule.Job = schedule.scheduleJob(timerValue, async() => {
-      return this._timerElapsed(timerId, eventName);
+    const job: schedule.Job = schedule.scheduleJob(timerValue, () => {
+      return this._timerElapsed(eventName);
     });
 
     if (!job) {
@@ -162,8 +119,7 @@ export class TimerService implements ITimerService {
     return job;
   }
 
-  private async _timerElapsed(timerId: string, eventName: string): Promise<void> {
-    await this.timerRepository.setLastElapsedById(timerId, new Date());
+  private _timerElapsed(eventName: string): void {
     this.eventAggregator.publish(eventName);
   }
 
