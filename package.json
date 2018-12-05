@@ -14,7 +14,7 @@
   ],
   "dependencies": {
     "@essential-projects/event_aggregator_contracts": "~3.1.0",
-    "@essential-projects/timing_contracts": "feature~remove_timer_repository",
+    "@essential-projects/timing_contracts": "~4.0.0",
     "moment": "~2.22.2",
     "node-schedule": "~1.3.0"
   },
