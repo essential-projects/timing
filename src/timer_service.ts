@@ -3,7 +3,7 @@ import {ITimerService, Timer, TimerRule, TimerType} from '@essential-projects/ti
 
 import * as moment from 'moment';
 import * as schedule from 'node-schedule';
-import * as uuid from 'uuid';
+import * as uuid from 'node-uuid';
 
 interface IJobsCache {
   [timerId: string]: schedule.Job;
