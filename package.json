@@ -13,8 +13,8 @@
     "Sebastian Meier <sebastian.meier@5minds.de>"
   ],
   "dependencies": {
-    "@essential-projects/event_aggregator_contracts": "~4.0.0",
-    "@essential-projects/timing_contracts": "~4.0.0",
+    "@essential-projects/event_aggregator_contracts": "feature~change_to_eslint_and_tsc",
+    "@essential-projects/timing_contracts": "feature~change_to_eslint_and_tsc",
     "moment": "~2.24.0",
     "node-schedule": "~1.3.0",
     "node-uuid": "~1.4.8"
