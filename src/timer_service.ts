@@ -1,5 +1,7 @@
 import {IEventAggregator} from '@essential-projects/event_aggregator_contracts';
-import {ITimerService, Timer, TimerRule, TimerType} from '@essential-projects/timing_contracts';
+import {
+  ITimerService, Timer, TimerRule, TimerType,
+} from '@essential-projects/timing_contracts';
 
 import * as moment from 'moment';
 import * as schedule from 'node-schedule';
@@ -11,29 +13,23 @@ interface IJobsCache {
 
 export class TimerService implements ITimerService {
 
-  private _jobs: IJobsCache = {};
+  private jobs: IJobsCache = {};
 
-  private _eventAggregator: IEventAggregator = undefined;
-
-  public config: any = undefined;
+  private readonly eventAggregator: IEventAggregator = undefined;
 
   private oneShotTimerType: number = 0;
 
   constructor(eventAggregator: IEventAggregator) {
-    this._eventAggregator = eventAggregator;
-  }
-
-  private get eventAggregator(): IEventAggregator {
-    return this._eventAggregator;
+    this.eventAggregator = eventAggregator;
   }
 
   public cancel(timerId: string): void {
 
-    const job: schedule.Job = this._getJob(timerId);
+    const job = this.getJob(timerId);
 
     if (job) {
       schedule.cancelJob(job);
-      this._removeJob(timerId);
+      this.removeJob(timerId);
     }
   }
 
@@ -43,7 +39,7 @@ export class TimerService implements ITimerService {
       throw new Error('Must provide an expiration date for a one-shot timer!');
     }
 
-    return this._createTimer(TimerType.once, date, undefined, eventName);
+    return this.createTimer(TimerType.once, date, undefined, eventName);
   }
 
   public periodic(rule: TimerRule, eventName: string): string {
@@ -52,36 +48,39 @@ export class TimerService implements ITimerService {
       throw new Error('Must provide a rule for a periodic timer!');
     }
 
-    return this._createTimer(TimerType.periodic, undefined, rule, eventName);
+    return this.createTimer(TimerType.periodic, undefined, rule, eventName);
   }
 
-  private _createTimer(timerType: TimerType,
-                       timerDate: moment.Moment,
-                       timerRule: TimerRule,
-                       eventName: string): string {
+  private createTimer(
+    timerType: TimerType,
+    timerDate: moment.Moment,
+    timerRule: TimerRule,
+    eventName: string,
+  ): string {
 
-    const timerData: any = {
+    const timerData: Timer = {
+      id: uuid.v4(),
       type: timerType,
-      expirationDate: timerDate || null,
+      expirationDate: timerDate || undefined,
       rule: timerRule,
       eventName: eventName,
+      lastElapsed: undefined,
     };
 
-    const timerIsValidTimerEntry: Boolean = this._isValidTimer(timerData);
+    const timerIsValidTimerEntry = this.isValidTimer(timerData);
 
     if (timerIsValidTimerEntry) {
-      timerData.id = uuid.v4();
-      this._createJob(timerData.id, timerData, eventName);
+      this.createJob(timerData.id, timerData, eventName);
     }
 
     return timerData.id;
   }
 
-  private _isValidTimer(timer: Timer): boolean {
+  private isValidTimer(timer: Timer): boolean {
 
-    const timerIsOneShotTimer: boolean = timer.type === this.oneShotTimerType;
+    const timerIsOneShotTimer = timer.type === this.oneShotTimerType;
 
-    let isValidTimer: boolean = true;
+    let isValidTimer = true;
 
     if (timerIsOneShotTimer) {
 
@@ -89,51 +88,53 @@ export class TimerService implements ITimerService {
         return false;
       }
 
-      const timerDate: moment.Moment = timer.expirationDate;
-      const now: moment.Moment = moment();
+      const timerDate = timer.expirationDate;
+      const now = moment();
 
-      const exectionTimeIsBefore: boolean = timerDate.isAfter(now);
+      const expirationIsFutureDate = timerDate.isAfter(now);
+      const timerHasAlreadyElapsed = timer.lastElapsed !== undefined;
 
-      isValidTimer = timer.lastElapsed !== null || exectionTimeIsBefore;
+      isValidTimer = timerHasAlreadyElapsed || expirationIsFutureDate;
     }
 
     return isValidTimer;
   }
 
-  private _createJob(timerId: string, timer: Timer, eventName: string): schedule.Job {
+  private createJob(timerId: string, timer: Timer, eventName: string): schedule.Job {
 
-    const timerValue: TimerRule | Date = timer.type === TimerType.periodic
-        ? timer.rule
-        : timer.expirationDate.toDate();
+    const timerValue = timer.type === TimerType.periodic
+      ? timer.rule
+      : timer.expirationDate.toDate();
 
-    const job: schedule.Job = schedule.scheduleJob(timerValue, () => {
-      return this._timerElapsed(eventName);
+    const job = schedule.scheduleJob(timerValue, (): void => {
+      return this.timerElapsed(eventName);
     });
 
     if (!job) {
       throw new Error('an error occured during job scheduling');
     }
 
-    this._cacheJob(timerId, job);
+    this.cacheJob(timerId, job);
 
     return job;
   }
 
-  private _timerElapsed(eventName: string): void {
+  private timerElapsed(eventName: string): void {
     this.eventAggregator.publish(eventName);
   }
 
-  private _getJob(timerId: string): schedule.Job {
-    return this._jobs[timerId];
+  private getJob(timerId: string): schedule.Job {
+    return this.jobs[timerId];
   }
 
-  private _cacheJob(timerId: string, job: schedule.Job): void {
-    this._jobs[timerId] = job;
+  private cacheJob(timerId: string, job: schedule.Job): void {
+    this.jobs[timerId] = job;
   }
 
-  private _removeJob(timerId: string): void {
-    if (this._jobs[timerId]) {
-      delete this._jobs[timerId];
+  private removeJob(timerId: string): void {
+    if (this.jobs[timerId]) {
+      delete this.jobs[timerId];
     }
   }
+
 }
