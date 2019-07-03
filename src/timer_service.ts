@@ -47,13 +47,13 @@ export class TimerService implements ITimerService {
     return this.createTimer(TimerType.once, date, undefined, eventName);
   }
 
-  public periodic(rule: string, eventName: string): string {
+  public periodic(crontab: string, eventName: string): string {
 
-    if (!rule) {
-      throw new Error('Must provide a rule for a periodic timer!');
+    if (!crontab) {
+      throw new Error('Must provide a crontab for a periodic timer!');
     }
 
-    return this.createTimer(TimerType.periodic, undefined, rule, eventName);
+    return this.createTimer(TimerType.periodic, undefined, crontab, eventName);
   }
 
   private createTimer(
