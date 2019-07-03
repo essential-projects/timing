@@ -1,3 +1,4 @@
+import * as cronparser from 'cron-parser';
 import * as moment from 'moment';
 import * as schedule from 'node-schedule';
 import * as uuid from 'node-uuid';
@@ -95,6 +96,8 @@ export class TimerService implements ITimerService {
       const timerHasAlreadyElapsed = timer.lastElapsed !== undefined;
 
       isValidTimer = timerHasAlreadyElapsed || expirationIsFutureDate;
+    } else {
+      cronparser.parseExpression(timer.rule);
     }
 
     return isValidTimer;
