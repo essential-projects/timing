@@ -1,11 +1,11 @@
+import * as moment from 'moment';
+import * as schedule from 'node-schedule';
+import * as uuid from 'node-uuid';
+
 import {IEventAggregator} from '@essential-projects/event_aggregator_contracts';
 import {
   ITimerService, Timer, TimerType,
 } from '@essential-projects/timing_contracts';
-
-import * as moment from 'moment';
-import * as schedule from 'node-schedule';
-import * as uuid from 'node-uuid';
 
 interface IJobsCache {
   [timerId: string]: schedule.Job;
