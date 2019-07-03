@@ -36,7 +36,7 @@ export class TimerService implements ITimerService {
     }
   }
 
-  public once(date: moment.Moment, eventName: string): string {
+  public oneShot(date: moment.Moment, eventName: string): string {
 
     if (!date) {
       throw new Error('Must provide an expiration date for a one-shot timer!');
@@ -45,7 +45,7 @@ export class TimerService implements ITimerService {
     return this.createTimer(TimerType.oneShot, date, eventName);
   }
 
-  public periodic(crontab: string, eventName: string): string {
+  public cronjob(crontab: string, eventName: string): string {
 
     if (!crontab) {
       throw new Error('Must provide a crontab for a periodic timer!');
