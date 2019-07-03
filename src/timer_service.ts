@@ -22,8 +22,6 @@ export class TimerService implements ITimerService {
 
   private readonly eventAggregator: IEventAggregator = undefined;
 
-  private oneShotTimerType: number = 0;
-
   constructor(eventAggregator: IEventAggregator) {
     this.eventAggregator = eventAggregator;
   }
@@ -44,7 +42,7 @@ export class TimerService implements ITimerService {
       throw new Error('Must provide an expiration date for a one-shot timer!');
     }
 
-    return this.createTimer(TimerType.once, date, undefined, eventName);
+    return this.createTimer(TimerType.oneShot, date, eventName);
   }
 
   public periodic(crontab: string, eventName: string): string {
@@ -53,21 +51,19 @@ export class TimerService implements ITimerService {
       throw new Error('Must provide a crontab for a periodic timer!');
     }
 
-    return this.createTimer(TimerType.periodic, undefined, crontab, eventName);
+    return this.createTimer(TimerType.cron, crontab, eventName);
   }
 
   private createTimer(
     timerType: TimerType,
-    timerDate: moment.Moment,
-    timerRule: string,
+    value: moment.Moment | string,
     eventName: string,
   ): string {
 
     const timerData: Timer = {
       id: uuid.v4(),
       type: timerType,
-      expirationDate: timerDate || undefined,
-      rule: timerRule,
+      value: value,
       eventName: eventName,
       lastElapsed: undefined,
     };
@@ -81,7 +77,7 @@ export class TimerService implements ITimerService {
 
   private ensureTimerIsValid(timer: Timer): void {
 
-    const timerIsOneShotTimer = timer.type === this.oneShotTimerType;
+    const timerIsOneShotTimer = timer.type === TimerType.oneShot;
     if (timerIsOneShotTimer) {
       this.validateOneShotTimer(timer);
     } else {
@@ -91,7 +87,7 @@ export class TimerService implements ITimerService {
 
   private validateOneShotTimer(timer: Timer): void {
 
-    if (!timer.expirationDate) {
+    if (!timer.value) {
       const errorMessage = `One-shot timer ${timer.eventName} does not have an expiration date!`;
       logger.error(errorMessage);
 
@@ -107,9 +103,9 @@ export class TimerService implements ITimerService {
   private validatePeriodicTimer(timer: Timer): void {
 
     try {
-      cronparser.parseExpression(timer.rule);
+      cronparser.parseExpression(timer.value as string);
     } catch (error) {
-      const errorMessage = `${timer.rule} is not a valid crontab!`;
+      const errorMessage = `${timer.value} is not a valid cron expression!`;
       logger.error(errorMessage);
 
       const invalidCrontabError = new UnprocessableEntityError(errorMessage);
@@ -120,14 +116,13 @@ export class TimerService implements ITimerService {
 
       throw invalidCrontabError;
     }
-
   }
 
   private createJob(timerId: string, timer: Timer, eventName: string): schedule.Job {
 
-    const timerValue = timer.type === TimerType.periodic
-      ? timer.rule
-      : timer.expirationDate.toDate();
+    const timerValue = timer.type === TimerType.cron
+      ? timer.value as string
+      : (timer.value as moment.Moment).toDate();
 
     const job = schedule.scheduleJob(timerValue, (): void => {
       return this.timerElapsed(eventName);
