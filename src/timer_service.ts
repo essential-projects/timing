@@ -1,6 +1,6 @@
 import {IEventAggregator} from '@essential-projects/event_aggregator_contracts';
 import {
-  ITimerService, Timer, TimerRule, TimerType,
+  ITimerService, Timer, TimerType,
 } from '@essential-projects/timing_contracts';
 
 import * as moment from 'moment';
@@ -42,7 +42,7 @@ export class TimerService implements ITimerService {
     return this.createTimer(TimerType.once, date, undefined, eventName);
   }
 
-  public periodic(rule: TimerRule, eventName: string): string {
+  public periodic(rule: string, eventName: string): string {
 
     if (!rule) {
       throw new Error('Must provide a rule for a periodic timer!');
@@ -54,7 +54,7 @@ export class TimerService implements ITimerService {
   private createTimer(
     timerType: TimerType,
     timerDate: moment.Moment,
-    timerRule: TimerRule,
+    timerRule: string,
     eventName: string,
   ): string {
 
