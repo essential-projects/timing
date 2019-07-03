@@ -1,8 +1,10 @@
 import * as cronparser from 'cron-parser';
+import {Logger} from 'loggerhythm';
 import * as moment from 'moment';
 import * as schedule from 'node-schedule';
 import * as uuid from 'node-uuid';
 
+import {UnprocessableEntityError} from '@essential-projects/errors_ts';
 import {IEventAggregator} from '@essential-projects/event_aggregator_contracts';
 import {
   ITimerService, Timer, TimerType,
@@ -11,6 +13,8 @@ import {
 interface IJobsCache {
   [timerId: string]: schedule.Job;
 }
+
+const logger = Logger.createLogger('essential-projects:timing:service');
 
 export class TimerService implements ITimerService {
 
@@ -68,39 +72,55 @@ export class TimerService implements ITimerService {
       lastElapsed: undefined,
     };
 
-    const timerIsValidTimerEntry = this.isValidTimer(timerData);
+    this.ensureTimerIsValid(timerData);
 
-    if (timerIsValidTimerEntry) {
-      this.createJob(timerData.id, timerData, eventName);
-    }
+    this.createJob(timerData.id, timerData, eventName);
 
     return timerData.id;
   }
 
-  private isValidTimer(timer: Timer): boolean {
+  private ensureTimerIsValid(timer: Timer): void {
 
     const timerIsOneShotTimer = timer.type === this.oneShotTimerType;
-
-    let isValidTimer = true;
-
     if (timerIsOneShotTimer) {
-
-      if (!timer.expirationDate) {
-        return false;
-      }
-
-      const timerDate = timer.expirationDate;
-      const now = moment();
-
-      const expirationIsFutureDate = timerDate.isAfter(now);
-      const timerHasAlreadyElapsed = timer.lastElapsed !== undefined;
-
-      isValidTimer = timerHasAlreadyElapsed || expirationIsFutureDate;
+      this.validateOneShotTimer(timer);
     } else {
+      this.validatePeriodicTimer(timer);
+    }
+  }
+
+  private validateOneShotTimer(timer: Timer): void {
+
+    if (!timer.expirationDate) {
+      const errorMessage = `One-shot timer ${timer.eventName} does not have an expiration date!`;
+      logger.error(errorMessage);
+
+      const noExpDateError = new UnprocessableEntityError(errorMessage);
+      noExpDateError.additionalInformation = <any> {
+        timer: timer,
+      };
+
+      throw noExpDateError;
+    }
+  }
+
+  private validatePeriodicTimer(timer: Timer): void {
+
+    try {
       cronparser.parseExpression(timer.rule);
+    } catch (error) {
+      const errorMessage = `${timer.rule} is not a valid crontab!`;
+      logger.error(errorMessage);
+
+      const invalidCrontabError = new UnprocessableEntityError(errorMessage);
+      error.additionalInformation = <any> {
+        validationError: error.message,
+        timer: timer,
+      };
+
+      throw invalidCrontabError;
     }
 
-    return isValidTimer;
   }
 
   private createJob(timerId: string, timer: Timer, eventName: string): schedule.Job {
