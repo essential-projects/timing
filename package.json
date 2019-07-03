@@ -15,7 +15,7 @@
   ],
   "dependencies": {
     "@essential-projects/event_aggregator_contracts": "^4.1.0",
-    "@essential-projects/timing_contracts": "^4.1.0",
+    "@essential-projects/timing_contracts": "feature~fix_cycle_timer_rule_parameter",
     "moment": "~2.24.0",
     "node-schedule": "~1.3.0",
     "node-uuid": "~1.4.8"
