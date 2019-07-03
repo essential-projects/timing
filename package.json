@@ -9,8 +9,16 @@
   "main": "dist/commonjs/index.js",
   "typings": "dist/index.d.ts",
   "author": "5Minds IT-Solutions GmbH & Co. KG",
-  "contributors": [
+  "maintainers": [
+    "Alexander Kasten <alexander.kasten@5minds.de>",
     "Christian Werner <christian.werner@5minds.de>",
+    "René Föhring <rene.foehring@5minds.de>",
+    "Steffen Knaup <steffen.knaup@5minds.de>"
+  ],
+  "contributors": [
+    "Christoph Gnip <christoph.gnip@5minds.de>",
+    "Paul Heidenreich <paul.heidenreich@5minds.de>",
+    "Heiko Mathes <heiko.mathes@5minds.de>",
     "Sebastian Meier <sebastian.meier@5minds.de>"
   ],
   "dependencies": {
