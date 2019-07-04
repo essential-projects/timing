@@ -24,7 +24,7 @@
   "dependencies": {
     "@essential-projects/errors_ts": "^1.5.0",
     "@essential-projects/event_aggregator_contracts": "^4.1.0",
-    "@essential-projects/timing_contracts": "feature~fix_cycle_timer_rule_parameter",
+    "@essential-projects/timing_contracts": "^5.0.0",
     "cron-parser": "^2.12.0",
     "loggerhythm": "^3.0.4",
     "moment": "~2.24.0",
