@@ -34,8 +34,6 @@
   "devDependencies": {
     "@essential-projects/eslint-config": "^1.0.0",
     "@types/node": "^12.11.7",
-    "eslint": "^5.16.0",
-    "tsconfig": "^7.0.0",
     "typescript": "^3.4.5"
   },
   "scripts": {
