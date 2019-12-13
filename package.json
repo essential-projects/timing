@@ -34,7 +34,8 @@
   "devDependencies": {
     "@essential-projects/eslint-config": "^1.0.0",
     "@types/node": "^12.11.7",
-    "typescript": "^3.4.5"
+    "eslint": "^6.6.0",
+    "typescript": "^3.7.2"
   },
   "scripts": {
     "clean": "rm -rf dist",
